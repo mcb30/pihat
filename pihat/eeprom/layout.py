@@ -92,11 +92,11 @@ class EepromUuidField(EepromTypedField):
     def __get__(self, instance, owner):
         if instance is None:
             return self
-        return self.type(bytes=bytes(getattr(instance, self.field)))
+        return self.type(bytes=bytes(getattr(instance, self.field))[::-1])
 
     def __set__(self, instance, value):
         if isinstance(value, self.type):
-            value = value.bytes
+            value = value.bytes[::-1]
         ftype = type(getattr(instance, self.field))
         setattr(instance, self.field, ftype(*bytes(value)))
 
