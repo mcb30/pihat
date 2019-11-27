@@ -21,4 +21,10 @@ setup(
         "Topic :: System :: Hardware :: Hardware Drivers",
     ],
     packages=find_packages(),
+    package_data={
+        'pihat': ['eeprom/eeprom.dtbo'],
+    },
+    install_requires=[
+        'setuptools',
+    ],
 )
