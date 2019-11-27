@@ -458,7 +458,7 @@ class Eeprom(EepromStructure):
         return self.header.pack(fixup=False) + b''.join(atoms)
 
     @classmethod
-    def unpack(cls, raw):
+    def unpack(cls, raw, **kwargs):
         header = EepromHeader.unpack(raw)
         if header.signature != EepromSignature.RPI:
             raise EepromSignatureError("Invalid EEPROM signature")
@@ -472,7 +472,7 @@ class Eeprom(EepromStructure):
             remaining = remaining[len(atom):]
         if header.numatoms != len(atoms):
             raise EepromLengthError("Atom count mismatch")
-        return cls(header, atoms)
+        return cls(header, atoms, **kwargs)
 
     def atom(self, type):
         """Find first atom of a specified type"""

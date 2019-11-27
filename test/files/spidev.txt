@@ -1,0 +1,16 @@
+vendor		"The Factory"
+product		"SPI Thing"
+product_id	0xfeed
+product_ver	0x00a0
+product_uuid	dac2b929-d621-4476-9742-1e0fa3cbc660
+
+gpio_drive	0
+gpio_slew	0
+gpio_hysteresis	0
+
+back_power	0
+
+setgpio		8	ALT0	DEFAULT
+setgpio		9	ALT0	DEFAULT
+setgpio		10	ALT0	DEFAULT
+setgpio		11	ALT0	DEFAULT

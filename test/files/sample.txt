@@ -1,0 +1,15 @@
+vendor		"The Factory"
+product		"Sample Board"
+product_id	0xcafe
+product_ver	0x0007
+product_uuid	23872014-7f74-46f9-b521-02456d9c8261
+
+gpio_drive	7
+gpio_slew	1
+gpio_hysteresis	0
+
+back_power	2
+
+setgpio		2	INPUT	DEFAULT
+setgpio		3	INPUT	DOWN
+setgpio		8	ALT3	DEFAULT
