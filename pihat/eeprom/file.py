@@ -29,9 +29,9 @@ class EepromFile(Eeprom):
 
     @classmethod
     @contextmanager
-    def open(cls, filename, autoload=True, autosave=False, **kwargs):
+    def open(cls, filename, mode='r+b', autoload=True, autosave=False,
+             **kwargs):
         """Open EEPROM file"""
-        mode = 'r+b' if autosave else 'rb'
         constructor = cls.load if autoload else cls
         with open(filename, mode=mode) as file:
             with constructor(file=file, autoload=autoload,

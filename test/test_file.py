@@ -98,3 +98,11 @@ class FileTest(unittest.TestCase):
                 self.assertEqual(eeprom3.uuid,
                                  UUID('5faf992a-2098-496c-a119-46dcb2dc0ddd'))
                 self.assertEqual(eeprom3.pstr, b'Sample Board')
+                eeprom3.pstr = b'Something'
+                eeprom3.save()
+                eeprom3.pstr = b'Else'
+                eeprom3.save()
+            with EepromFile.open(temp.name, autosave=False) as eeprom4:
+                self.assertEqual(eeprom4.uuid,
+                                 UUID('5faf992a-2098-496c-a119-46dcb2dc0ddd'))
+                self.assertEqual(eeprom4.pstr, b'Else')
