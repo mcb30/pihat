@@ -15,7 +15,7 @@ class EepromDevice(EepromFile):
 
     dtbo = pkg_resources.resource_string(__name__, 'ideeprom.dtbo')
 
-    sysfs_eeprom = Path('/sys/class/i2c-adapter/i2c-0/0-0050/eeprom')
+    sysfs_eeprom = Path('/sys/class/i2c-adapter/i2c-99/99-0050/eeprom')
     sysfs_overlay = Path('/sys/kernel/config/device-tree/overlays/ideeprom')
 
     eeprom_wait_interval = 0.1

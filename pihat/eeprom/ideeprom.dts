@@ -6,6 +6,34 @@
  * This device tree overlay may be used to enable the ID EEPROM
  * attached to a Raspberry Pi Hat.
  *
+ * The hardware i2c-0 controller cannot be relied upon to be connected
+ * to the ID_SC and ID_SD pins.  In some circumstances (such as when a
+ * touchscreen is attached), the GPU will invisibly redirect the
+ * hardware i2c-0 controller to the display cable.
+ *
+ * The only reliable mechanism is to create a bit-bashed I2C interface
+ * attached to GPIO0 (ID_SD, pin 27) and GPIO1 (ID_SC, pin 28).
+ *
+ * The offical "ADD-ON BOARDS AND HATS" specification at
+ *
+ *    https://github.com/raspberrypi/hats/blob/master/README.md
+ *
+ * states that
+ *
+ *   "The ID_SC and ID_SD pins must only be used for attaching a
+ *    compatible ID EEPROM. Do not use ID_SC and ID_SD pins for
+ *    anything except connecting an ID EEPROM, if unused these pins
+ *    must be left unconnected"
+ *
+ * It is therefore valid to assume that nothing other than the ID
+ * EEPROM is connected to pins 27 and 28, and hence that we can safely
+ * take exclusive ownership of these pins without worrying about any
+ * existing users.
+ *
+ * We choose to use bus number 99 to avoid conflicts with any
+ * plausible hardware i2c controllers on current or future Pis.
+ *
+ *
  * Compile using:
  *
  *   dtc -@ ideeprom.dts -o ideeprom.dtbo
@@ -18,18 +46,25 @@
 / {
 	compatible = "brcm,bcm2708";
 
-	/* Enable I2C0 controller and EEPROM */
+	/* Enable bit-bashing I2C0 controller and EEPROM */
 	fragment@0 {
-		target = <&i2c0>;
+		target-path = "/";
 		__overlay__ {
 			#address-cells = <1>;
-			#size-cells = <0>;
+			#size-cells = <1>;
 
-			status = "okay";
+			i2c@99 {
+				#address-cells = <1>;
+				#size-cells = <0>;
 
-			eeprom@50 {
-				compatible = "atmel,24c128";
-				reg = <0x50>;
+				compatible = "i2c-gpio";
+				reg = <99 0>;
+				gpios = <&gpio 0 0 &gpio 1 0>;
+
+				eeprom@50 {
+					compatible = "atmel,24c128";
+					reg = <0x50>;
+				};
 			};
 		};
 	};
