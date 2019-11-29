@@ -59,7 +59,7 @@ class HeaderTest(unittest.TestCase):
             0x52, 0x2d, 0x50, 0x69, 0x01, 0x00, 0x03, 0x00,
             0x27, 0x08, 0x00, 0x00
         ])
-        header = EepromHeader.unpack(raw)
+        header = EepromHeader().unpack(raw)
         self.assertIsInstance(header, EepromHeader)
         self.assertEqual(header.signature, EepromSignature.RPI)
         self.assertEqual(header.version, EepromVersion.V1)
@@ -70,8 +70,8 @@ class HeaderTest(unittest.TestCase):
             numatoms=3, eeplen=0x827,
         ))
         with self.assertRaises(EepromLengthError):
-            EepromHeader.unpack(raw[:-1])
-        self.assertEqual(EepromHeader.unpack(raw + b'padding'), header)
+            EepromHeader().unpack(raw[:-1])
+        self.assertEqual(EepromHeader().unpack(raw + b'padding'), header)
 
 
 class VendorInfoTest(unittest.TestCase):
@@ -128,7 +128,7 @@ class VendorInfoTest(unittest.TestCase):
             0xd4, 0x4c, 0xa3, 0x8f, 0x55, 0xec, 0x60, 0x9b,
             0x34, 0x12, 0xcd, 0xab, 0x07, 0x05
         ]) + b'CompanyThing'
-        info = EepromVendorInfo.unpack(raw)
+        info = EepromVendorInfo().unpack(raw)
         self.assertEqual(info.uuid,
                          UUID('9b60ec55-8fa3-4cd4-9b01-a6f17b1903b3'))
         self.assertEqual(info.pid, 0x1234)
@@ -136,8 +136,8 @@ class VendorInfoTest(unittest.TestCase):
         self.assertEqual(info.vstr, b'Company')
         self.assertEqual(info.pstr, b'Thing')
         with self.assertRaises(EepromLengthError):
-            EepromVendorInfo.unpack(raw[:-1])
-        self.assertEqual(EepromVendorInfo.unpack(raw + b'padding'), info)
+            EepromVendorInfo().unpack(raw[:-1])
+        self.assertEqual(EepromVendorInfo().unpack(raw + b'padding'), info)
 
 
 class GpioMapTest(unittest.TestCase):
@@ -232,7 +232,7 @@ class GpioMapTest(unittest.TestCase):
             0x03, 0x01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x81,
             0, 0, 0, 0, 0xc6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xa7
         ])
-        gpio = EepromGpioMap.unpack(raw)
+        gpio = EepromGpioMap().unpack(raw)
         self.assertEqual(gpio.bank.drive, EepromGpioDrive.MA_6)
         self.assertEqual(gpio.power.back_power, EepromGpioBackPower.MA_1300)
         self.assertFalse(gpio.pins[11].used)
@@ -242,8 +242,8 @@ class GpioMapTest(unittest.TestCase):
         self.assertEqual(gpio.pins[27].pull, EepromGpioPull.UP)
         self.assertEqual(gpio.pins[27].function, EepromGpioFunction.ALT3)
         with self.assertRaises(EepromLengthError):
-            EepromGpioMap.unpack(raw[:-1])
-        self.assertEqual(EepromGpioMap.unpack(raw + b'padding'), gpio)
+            EepromGpioMap().unpack(raw[:-1])
+        self.assertEqual(EepromGpioMap().unpack(raw + b'padding'), gpio)
 
 
 class AtomTest(unittest.TestCase):
@@ -281,7 +281,7 @@ class AtomTest(unittest.TestCase):
             0xce, 0xfa, 0xfe, 0xca, 0x00, 0x02, 0x49, 0x74,
             0x25, 0xe6
         ])
-        atom = EepromAtom.unpack(raw)
+        atom = EepromAtom().unpack(raw)
         self.assertEqual(atom.type, EepromAtomType.INFO)
         self.assertEqual(atom.count, 3)
         self.assertIsInstance(atom.data, EepromVendorInfo)
@@ -292,15 +292,15 @@ class AtomTest(unittest.TestCase):
         self.assertEqual(atom.data.vstr, b'')
         self.assertEqual(atom.data.pstr, b'It')
         with self.assertRaises(EepromLengthError):
-            EepromAtom.unpack(raw[:-1])
-        self.assertEqual(EepromAtom.unpack(raw + b'padding'), atom)
+            EepromAtom().unpack(raw[:-1])
+        self.assertEqual(EepromAtom().unpack(raw + b'padding'), atom)
         with self.assertRaises(EepromCrcError):
-            EepromAtom.unpack(raw[:-1] + b'\0')
+            EepromAtom().unpack(raw[:-1] + b'\0')
         raw = bytes([
             0x2a, 0x00, 0x01, 0x00, 0x07, 0x00, 0x00, 0x00,
             0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x16, 0x55
         ])
-        atom = EepromAtom.unpack(raw)
+        atom = EepromAtom().unpack(raw)
         self.assertIsInstance(atom.type, EepromAtomType)
         self.assertEqual(atom.type, 42)
         self.assertEqual(atom.count, 1)
@@ -389,11 +389,11 @@ class EepromTest(unittest.TestCase):
         ])
         self.assertEqual(eeprom.pack(), raw)
         self.assertEqual(bytes(eeprom), raw)
-        self.assertEqual(Eeprom.unpack(raw), eeprom)
+        self.assertEqual(Eeprom().unpack(raw), eeprom)
         with self.assertRaises(EepromSignatureError):
-            Eeprom.unpack(b'x' + raw[1:])
+            Eeprom().unpack(b'x' + raw[1:])
         with self.assertRaises(EepromLengthError):
-            Eeprom.unpack(raw[:-1])
-        self.assertEqual(Eeprom.unpack(raw + b'padding'), eeprom)
+            Eeprom().unpack(raw[:-1])
+        self.assertEqual(Eeprom().unpack(raw + b'padding'), eeprom)
         with self.assertRaises(EepromCrcError):
-            Eeprom.unpack(raw[:-1] + b'\0')
+            Eeprom().unpack(raw[:-1] + b'\0')

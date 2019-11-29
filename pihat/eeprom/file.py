@@ -51,7 +51,7 @@ class EepromFile(Eeprom):
         with suppress(IOError):
             file.seek(0)
         raw = file.read()
-        return cls.unpack(raw, file=file, **kwargs)
+        return cls(file=file, **kwargs).unpack(raw)
 
     def save(self, file=None):
         """Save EEPROM to file"""

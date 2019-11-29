@@ -51,9 +51,8 @@ class EepromStructure:
         if fixup:
             self.fixup()
 
-    @classmethod
     @abstractmethod
-    def unpack(cls, raw):
+    def unpack(self, raw):
         """Unpack structure from binary data"""
 
 
@@ -164,15 +163,15 @@ class EepromLittleEndianStructure(EepromStructure, LittleEndianStructure):
     def pack(self, fixup=True):
         """Pack structure to binary data"""
         super().pack(fixup=fixup)
-        return bytes(memoryview(self))
+        return memoryview(self).tobytes()
 
-    @classmethod
-    def unpack(cls, raw):
+    def unpack(self, raw):
         """Unpack structure from binary data"""
-        try:
-            return cls.from_buffer_copy(raw)
-        except ValueError as exc:
-            raise EepromLengthError(*exc.args)
+        hlen = sizeof(self)
+        if len(raw) < hlen:
+            raise EepromLengthError("Underlength structure")
+        memoryview(self).cast('B')[:] = raw[:hlen]
+        return self
 
 
 class EepromArray(Array):
@@ -237,6 +236,7 @@ class EepromVendorInfo(EepromAtomData):
         return sizeof(self) + len(self._vstr) + len(self._pstr)
 
     def fixup(self):
+        # pylint: disable=attribute-defined-outside-init
         super().fixup()
         self._vslen = len(self.vstr)
         self._pslen = len(self.pstr)
@@ -244,10 +244,8 @@ class EepromVendorInfo(EepromAtomData):
     def pack(self, fixup=True):
         return super().pack(fixup=fixup) + self._vstr + self._pstr
 
-    @classmethod
-    def unpack(cls, raw):
-        # pylint: disable=protected-access
-        self = super().unpack(raw)
+    def unpack(self, raw):
+        super().unpack(raw)
         hlen = sizeof(self)
         vslen = self._vslen
         pslen = self._pslen
@@ -356,10 +354,8 @@ class EepromAtom(EepromLittleEndianStructure):
         checksum = EepromAtomChecksum(crc=crc16(body, CRC_SEED))
         return body + checksum
 
-    @classmethod
-    def unpack(cls, raw):
-        # pylint: disable=protected-access
-        self = super().unpack(raw)
+    def unpack(self, raw):
+        super().unpack(raw)
         hlen = sizeof(self)
         dlen = self._dlen
         clen = sizeof(EepromAtomChecksum)
@@ -371,14 +367,14 @@ class EepromAtom(EepromLittleEndianStructure):
         if crc16(atom, CRC_SEED) != 0:
             raise EepromCrcError(
                 "Invalid atom CRC 0x%04x (expected 0x%04x)" % (
-                    EepromAtomChecksum.unpack(atom[-clen:]).crc,
+                    EepromAtomChecksum().unpack(atom[-clen:]).crc,
                     crc16(atom[:-clen])
                 )
             )
         self.data = atom[hlen:-clen]
         subcls = EepromAtomData.types.get(self.type)
         if subcls is not None:
-            self.data = subcls.unpack(self.data)
+            self.data = subcls().unpack(self.data)
         return self
 
 
@@ -457,22 +453,21 @@ class Eeprom(EepromStructure):
         atoms = [x.pack(fixup=False) for x in self.atoms]
         return self.header.pack(fixup=False) + b''.join(atoms)
 
-    @classmethod
-    def unpack(cls, raw, **kwargs):
-        header = EepromHeader.unpack(raw)
-        if header.signature != EepromSignature.RPI:
+    def unpack(self, raw):
+        self.header = EepromHeader().unpack(raw)
+        if self.header.signature != EepromSignature.RPI:
             raise EepromSignatureError("Invalid EEPROM signature")
-        if len(raw) < header.eeplen:
+        if len(raw) < self.header.eeplen:
             raise EepromLengthError("Underlength EEPROM content")
-        remaining = raw[len(header):header.eeplen]
-        atoms = []
+        remaining = raw[len(self.header):self.header.eeplen]
+        self.atoms = []
         while remaining:
-            atom = EepromAtom.unpack(remaining)
-            atoms.append(atom)
+            atom = EepromAtom().unpack(remaining)
+            self.atoms.append(atom)
             remaining = remaining[len(atom):]
-        if header.numatoms != len(atoms):
+        if self.header.numatoms != len(self.atoms):
             raise EepromLengthError("Atom count mismatch")
-        return cls(header, atoms, **kwargs)
+        return self
 
     def atom(self, type):
         """Find first atom of a specified type"""
