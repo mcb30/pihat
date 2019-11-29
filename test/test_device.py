@@ -1,21 +1,15 @@
 """Device tests"""
 
 from pathlib import Path
-import unittest
 from unittest.mock import patch
 from uuid import UUID
 import sys
 from pihat.eeprom import *
+from .test_file import FileTestBase
 
 
-class DeviceTest(unittest.TestCase):
+class DeviceTest(FileTestBase):
     """Device tests"""
-
-    @classmethod
-    def setUpClass(cls):
-        """Initialise test suite"""
-        module = sys.modules[cls.__module__]
-        cls.files = Path(module.__file__).parent / 'files'
 
     def test_load(self):
         """Test loading EEPROM from dummy device"""

@@ -10,8 +10,8 @@ from uuid import UUID
 from pihat.eeprom import *
 
 
-class FileTest(unittest.TestCase):
-    """File tests"""
+class FileTestBase(unittest.TestCase):
+    """File tests base class"""
 
     @classmethod
     def setUpClass(cls):
@@ -28,6 +28,10 @@ class FileTest(unittest.TestCase):
             return open(file, 'rb')
         with filecontext(file1) as fh1, filecontext(file2) as fh2:
             self.assertEqual(fh1.read(), fh2.read())
+
+
+class FileTest(FileTestBase):
+    """File tests"""
 
     def test_load_name(self):
         """Test loading EEPROM by filename"""
