@@ -7,7 +7,9 @@ import sys
 from tempfile import NamedTemporaryFile, TemporaryFile
 import unittest
 from uuid import UUID
-from pihat.eeprom import *
+from pihat.eeprom import (EepromFile, EepromGpioDrive, EepromGpioFunction,
+                          EepromGpioSlew, EepromGpioHysteresis,
+                          EepromGpioBackPower, EepromGpioPull)
 
 
 class FileTestBase(unittest.TestCase):

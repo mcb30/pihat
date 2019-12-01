@@ -3,7 +3,14 @@
 import struct
 import unittest
 from uuid import UUID
-from pihat.eeprom import *
+from pihat.eeprom import (crc16, EepromHeader, EepromSignature, EepromVersion,
+                          EepromVendorInfo, EepromGpioMap, EepromGpioBank,
+                          EepromGpioDrive, EepromGpioSlew,
+                          EepromGpioHysteresis, EepromGpioPower,
+                          EepromGpioBackPower, EepromGpioPins, EepromGpioPin,
+                          EepromGpioFunction, EepromGpioPull, EepromAtom,
+                          EepromAtomType, Eeprom, EepromSignatureError,
+                          EepromLengthError, EepromCrcError)
 
 
 class HeaderTest(unittest.TestCase):

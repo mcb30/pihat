@@ -6,7 +6,7 @@ from unittest.mock import patch
 from uuid import UUID
 import sys
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-from pihat.eeprom import *
+from pihat.eeprom import EepromDeviceOverlay, EepromDevice
 from .test_file import FileTestBase
 
 
