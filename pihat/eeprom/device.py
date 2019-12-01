@@ -1,10 +1,10 @@
 """EEPROM device"""
 
 from contextlib import contextmanager, nullcontext
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, InitVar
 from pathlib import Path
 import time
-from typing import List
+from typing import List, Optional
 import pkg_resources
 from .file import EepromFile
 
@@ -13,19 +13,29 @@ __all__ = [
     'EepromDevice',
 ]
 
+DEFAULT_BUS = 99
+
 
 @dataclass
 class EepromDeviceOverlay:
     """EEPROM devicetree overlay"""
 
-    bus: int = 99
-    name: str = 'ideeprom'
-    data: bytes = pkg_resources.resource_string(__name__, 'ideeprom.dtbo')
+    bus: int = DEFAULT_BUS
     autocreate: bool = True
     timeout: float = 2.0
     interval: float = 0.1
 
     _ctx: List = field(init=False, repr=False, default_factory=list)
+
+    @property
+    def name(self):
+        """Overlay name"""
+        return 'ideeprom%d' % self.bus
+
+    @property
+    def data(self):
+        """Overlay devicetree blob"""
+        return pkg_resources.resource_string(__name__, '%s.dtbo' % self.name)
 
     @property
     def directory(self):
@@ -80,7 +90,13 @@ class EepromDeviceOverlay:
 class EepromDevice(EepromFile):
     """EEPROM stored in an i2c EEPROM device"""
 
+    bus: InitVar[Optional[int]] = None
     overlay: EepromDeviceOverlay = field(default_factory=EepromDeviceOverlay)
+
+    def __post_init__(self, bus):
+        # pylint: disable=assigning-non-slot
+        if bus is not None:
+            self.overlay.bus = bus
 
     @contextmanager
     def open(self, file=None, mode=None):

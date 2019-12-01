@@ -14,16 +14,19 @@ class OverlayTest(FileTestBase):
 
     def test_paths(self):
         """Test constructed paths"""
-        overlay = EepromDeviceOverlay(
-            bus=42,
-            name='foo',
+        overlay = EepromDeviceOverlay(bus=42)
+        self.assertEqual(
+            str(overlay.directory),
+            '/sys/kernel/config/device-tree/overlays/ideeprom42'
         )
-        self.assertEqual(str(overlay.directory),
-                         '/sys/kernel/config/device-tree/overlays/foo')
-        self.assertEqual(str(overlay.dtbo),
-                         '/sys/kernel/config/device-tree/overlays/foo/dtbo')
-        self.assertEqual(str(overlay.eeprom),
-                         '/sys/class/i2c-adapter/i2c-42/42-0050/eeprom')
+        self.assertEqual(
+            str(overlay.dtbo),
+            '/sys/kernel/config/device-tree/overlays/ideeprom42/dtbo'
+        )
+        self.assertEqual(
+            str(overlay.eeprom),
+            '/sys/class/i2c-adapter/i2c-42/42-0050/eeprom'
+        )
 
     def test_install(self):
         """Test device installation"""
@@ -33,11 +36,13 @@ class OverlayTest(FileTestBase):
             with patch.object(EepromDeviceOverlay, 'directory', ovdir):
                 with patch.object(EepromDeviceOverlay, 'eeprom',
                                   self.files / '__nonexistent_file__'):
-                    with EepromDeviceOverlay(data=dtbo.getvalue()):
-                        dtbofile = ovdir / 'dtbo'
-                        self.assertFilesEqual(dtbofile, dtbo)
-                        dtbofile.unlink()
-                    self.assertFalse(ovdir.exists())
+                    with patch.object(EepromDeviceOverlay, 'data',
+                                      dtbo.getvalue()):
+                        with EepromDeviceOverlay():
+                            dtbofile = ovdir / 'dtbo'
+                            self.assertFilesEqual(dtbofile, dtbo)
+                            dtbofile.unlink()
+                        self.assertFalse(ovdir.exists())
 
 
 class DeviceTest(FileTestBase):
@@ -102,3 +107,8 @@ class DeviceTest(FileTestBase):
                 eeprom.load()
                 eeprom.save(temp.name)
             self.assertFilesEqual(temp.name, self.files / 'spidev.eep')
+
+    def test_bus(self):
+        """Test specifying I2C bus"""
+        eeprom = EepromDevice(bus=1)
+        self.assertEqual(eeprom.overlay.bus, 1)

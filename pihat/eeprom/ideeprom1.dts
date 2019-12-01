@@ -1,0 +1,37 @@
+/* -*- c -*- */
+
+/*
+ * Device Tree Overlay for Raspberry Pi Hat ID EEPROM
+ *
+ * This device tree overlay may be used to enable the ID EEPROM
+ * attached to a Raspberry Pi Hat via the hardware i2c-1 controller.
+ *
+ *
+ * Compile using:
+ *
+ *   dtc -@ ideeprom1.dts -o ideeprom1.dtbo
+ *
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "brcm,bcm2708";
+
+	/* Enable hardware I2C1 controller and EEPROM */
+	fragment@0 {
+		target = <&i2c1>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			status = "okay";
+
+			eeprom@50 {
+				compatible = "atmel,24c128";
+				reg = <0x50>;
+			};
+		};
+	};
+};
