@@ -16,3 +16,7 @@ mypy pihat test
 # Run pycodestyle
 #
 python3 -m pycodestyle pihat test
+
+# Run pylint
+#
+pylint pihat test

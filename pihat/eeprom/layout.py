@@ -417,6 +417,7 @@ class EepromGpioAttribute(EepromAtomAttribute):
 @dataclass
 class Eeprom(EepromStructure):
     """EEPROM content"""
+    # pylint: disable=too-many-instance-attributes
 
     header: EepromHeader = field(default_factory=lambda: EepromHeader(
         signature=EepromSignature.RPI, version=EepromVersion.V1,

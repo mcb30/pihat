@@ -86,5 +86,5 @@ class EepromDevice(EepromFile):
     def open(self, file=None, mode=None):
         cm = (self.overlay if file is None and self.file is None else
               nullcontext(file))
-        with cm as file, super().open(file, mode) as ctx:
+        with cm as inner_file, super().open(inner_file, mode) as ctx:
             yield ctx

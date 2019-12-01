@@ -1,2 +1,5 @@
 [MESSAGES CONTROL]
 disable=invalid-name,too-few-public-methods,too-many-ancestors
+
+[TYPECHECK]
+ignored-classes=Field,nullcontext
