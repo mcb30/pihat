@@ -5,13 +5,13 @@ set -x
 
 # Run test suite with coverage checks
 #
-coverage3 erase
-coverage3 run --branch --source pihat setup.py test
-coverage3 report --show-missing
+python3 -m coverage erase
+python3 -m coverage run --branch --source pihat setup.py test
+python3 -m coverage report --show-missing
 
 # Run mypy
 #
-mypy pihat test
+python3 -m mypy pihat test
 
 # Run pycodestyle
 #
@@ -19,4 +19,4 @@ python3 -m pycodestyle pihat test
 
 # Run pylint
 #
-pylint pihat test
+python3 -m pylint pihat test
