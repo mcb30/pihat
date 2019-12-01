@@ -1,54 +1,90 @@
 """EEPROM device"""
 
+from contextlib import contextmanager, nullcontext
+from dataclasses import dataclass, field
 from pathlib import Path
-import pkg_resources
 import time
+from typing import List
+import pkg_resources
 from .file import EepromFile
 
 __all__ = [
+    'EepromDeviceOverlay',
     'EepromDevice',
 ]
 
 
+@dataclass
+class EepromDeviceOverlay:
+    """EEPROM devicetree overlay"""
+
+    bus: int = 99
+    name: str = 'ideeprom'
+    data: bytes = pkg_resources.resource_string(__name__, 'ideeprom.dtbo')
+    autocreate: bool = True
+    timeout: float = 2.0
+    interval: float = 0.1
+
+    _ctx: List = field(init=False, repr=False, default_factory=list)
+
+    @property
+    def directory(self):
+        """Overlay directory"""
+        return Path('/sys/kernel/config/device-tree/overlays/%s' % self.name)
+
+    @property
+    def dtbo(self):
+        """Overlay file"""
+        return self.directory / 'dtbo'
+
+    @property
+    def eeprom(self):
+        """EEPROM device path"""
+        return Path('/sys/class/i2c-adapter/i2c-%d/%d-0050/eeprom' %
+                    (self.bus, self.bus))
+
+    def wait(self):
+        """Wait for EEPROM device to exist"""
+        expired = time.time() + self.timeout
+        while time.time() < expired:
+            if self.eeprom.exists():
+                break
+            time.sleep(self.interval)
+
+    def install(self):
+        """Install overlay"""
+        self.directory.mkdir(exist_ok=True)
+        with self.dtbo.open('wb') as fh:
+            fh.write(self.data)
+        self.wait()
+
+    def remove(self):
+        """Remove overlay"""
+        if self.directory.exists():
+            self.directory.rmdir()
+
+    def __enter__(self):
+        install = self.autocreate and not self.eeprom.exists()
+        if install:
+            self.install()
+        self._ctx.append(install)
+        return self.eeprom
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        installed = self._ctx.pop()
+        if installed:
+            self.remove()
+
+
+@dataclass
 class EepromDevice(EepromFile):
     """EEPROM stored in an i2c EEPROM device"""
 
-    dtbo = pkg_resources.resource_string(__name__, 'ideeprom.dtbo')
+    overlay: EepromDeviceOverlay = field(default_factory=EepromDeviceOverlay)
 
-    sysfs_eeprom = Path('/sys/class/i2c-adapter/i2c-99/99-0050/eeprom')
-    sysfs_overlay = Path('/sys/kernel/config/device-tree/overlays/ideeprom')
-
-    eeprom_wait_interval = 0.1
-    eeprom_wait_max = 2.0
-
-    @classmethod
-    def dtoverlay(cls):
-        """Create EEPROM device via devicetree overlay"""
-        cls.sysfs_overlay.mkdir(exist_ok=True)
-        dtbofile = cls.sysfs_overlay / 'dtbo'
-        with dtbofile.open('wb') as f:
-            f.write(cls.dtbo)
-        expired = time.time() + cls.eeprom_wait_max
-        while time.time() < expired:
-            if cls.sysfs_eeprom.exists():
-                return True
-            time.sleep(cls.eeprom_wait_interval)
-        return False
-
-    @classmethod
-    def device(cls, autocreate=True):
-        """Get EEPROM device name"""
-        if autocreate and not cls.sysfs_eeprom.exists():
-            cls.dtoverlay()
-        return cls.sysfs_eeprom
-
-    @classmethod
-    def open(cls, autocreate=True, **kwargs):
-        filename = cls.device(autocreate=autocreate)
-        return super().open(filename=filename, **kwargs)
-
-    @classmethod
-    def load(cls, file=None, autocreate=True, **kwargs):
-        if file is None:
-            file = cls.device(autocreate=autocreate)
-        return super().load(file=file, **kwargs)
+    @contextmanager
+    def open(self, file=None, mode=None):
+        cm = (self.overlay if file is None and self.file is None else
+              nullcontext(file))
+        with cm as file, super().open(file, mode) as ctx:
+            yield ctx

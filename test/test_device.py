@@ -1,11 +1,44 @@
 """Device tests"""
 
+from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
 from uuid import UUID
 import sys
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from pihat.eeprom import *
 from .test_file import FileTestBase
+
+
+class OverlayTest(FileTestBase):
+    """Devicetree overlay tests"""
+
+    def test_paths(self):
+        """Test constructed paths"""
+        overlay = EepromDeviceOverlay(
+            bus=42,
+            name='foo',
+        )
+        self.assertEqual(str(overlay.directory),
+                         '/sys/kernel/config/device-tree/overlays/foo')
+        self.assertEqual(str(overlay.dtbo),
+                         '/sys/kernel/config/device-tree/overlays/foo/dtbo')
+        self.assertEqual(str(overlay.eeprom),
+                         '/sys/class/i2c-adapter/i2c-42/42-0050/eeprom')
+
+    def test_install(self):
+        """Test device installation"""
+        dtbo = BytesIO(b'hello world')
+        with TemporaryDirectory() as tempdir:
+            ovdir = Path(tempdir) / 'overlay'
+            with patch.object(EepromDeviceOverlay, 'directory', ovdir):
+                with patch.object(EepromDeviceOverlay, 'eeprom',
+                                  self.files / '__nonexistent_file__'):
+                    with EepromDeviceOverlay(data=dtbo.getvalue()):
+                        dtbofile = ovdir / 'dtbo'
+                        self.assertFilesEqual(dtbofile, dtbo)
+                        dtbofile.unlink()
+                    self.assertFalse(ovdir.exists())
 
 
 class DeviceTest(FileTestBase):
@@ -13,51 +46,60 @@ class DeviceTest(FileTestBase):
 
     def test_load(self):
         """Test loading EEPROM from dummy device"""
-        with patch.object(EepromDevice, 'sysfs_eeprom',
+        eeprom = EepromDevice()
+        with patch.object(EepromDeviceOverlay, 'eeprom',
                           self.files / 'sample.eep'):
-            with patch.object(EepromDevice, 'dtoverlay') as dtoverlay:
-                eeprom = EepromDevice.load()
-                dtoverlay.assert_not_called()
+            with patch.object(eeprom.overlay, 'install') as install:
+                eeprom.load()
+                install.assert_not_called()
             self.assertEqual(eeprom.uuid,
                              UUID('23872014-7f74-46f9-b521-02456d9c8261'))
 
     def test_autocreate(self):
         """Test triggering autocreate"""
-        with patch.object(EepromDevice, 'sysfs_eeprom',
+        eeprom = EepromDevice()
+        with patch.object(EepromDeviceOverlay, 'eeprom',
                           self.files / '__nonexistent_file__'):
-            with patch.object(EepromDevice, 'dtoverlay') as dtoverlay:
+            with patch.object(eeprom.overlay, 'install') as install:
                 with self.assertRaises(FileNotFoundError):
-                    EepromDevice.load()
-                dtoverlay.assert_called_once()
-            with patch.object(EepromDevice, 'dtoverlay') as dtoverlay:
+                    eeprom.load()
+                install.assert_called_once()
+            with patch.object(eeprom.overlay, 'install') as install:
                 with self.assertRaises(FileNotFoundError):
-                    with EepromDevice.open() as eeprom:
+                    with eeprom:
                         pass
-                dtoverlay.assert_called_once()
+                install.assert_called_once()
 
     def test_no_autocreate(self):
         """Test disabling autocreate"""
-        with patch.object(EepromDevice, 'sysfs_eeprom',
+        eeprom = EepromDevice(overlay=EepromDeviceOverlay(autocreate=False))
+        with patch.object(EepromDeviceOverlay, 'eeprom',
                           self.files / '__nonexistent_file__'):
-            with patch.object(EepromDevice, 'dtoverlay') as dtoverlay:
+            with patch.object(eeprom.overlay, 'install') as install:
                 with self.assertRaises(FileNotFoundError):
-                    EepromDevice.load(autocreate=False)
-                dtoverlay.assert_not_called()
-            with patch.object(EepromDevice, 'dtoverlay') as dtoverlay:
+                    eeprom.load()
+                install.assert_not_called()
+            with patch.object(eeprom.overlay, 'install') as install:
                 with self.assertRaises(FileNotFoundError):
-                    with EepromDevice.open(autocreate=False) as eeprom:
+                    with eeprom:
                         pass
-                dtoverlay.assert_not_called()
+                install.assert_not_called()
 
-    def test_dtoverlay(self):
-        """Test device tree overlay"""
-        with patch.object(EepromDevice, 'sysfs_eeprom',
-                          self.files / 'sample.eep'):
-            with patch.object(EepromDevice, 'sysfs_overlay') as sysfs_overlay:
-                self.assertTrue(EepromDevice.dtoverlay())
-                sysfs_overlay.mkdir.assert_called_once()
-        with patch.object(EepromDevice, 'sysfs_eeprom',
-                          self.files / '__nonexistent_file__'):
-            with patch.object(EepromDevice, 'sysfs_overlay') as sysfs_overlay:
-                self.assertFalse(EepromDevice.dtoverlay())
-                sysfs_overlay.mkdir.assert_called_once()
+    def test_file_to_device(self):
+        """Test loading from file and writing to device"""
+        eeprom = EepromDevice()
+        with NamedTemporaryFile() as temp:
+            with patch.object(EepromDeviceOverlay, 'eeprom', Path(temp.name)):
+                eeprom.load(self.files / 'sample.eep')
+                eeprom.save()
+            self.assertFilesEqual(temp.name, self.files / 'sample.eep')
+
+    def test_device_to_file(self):
+        """Test loading from device and saving to file"""
+        eeprom = EepromDevice()
+        with NamedTemporaryFile() as temp:
+            with patch.object(EepromDeviceOverlay, 'eeprom',
+                              self.files / 'spidev.eep'):
+                eeprom.load()
+                eeprom.save(temp.name)
+            self.assertFilesEqual(temp.name, self.files / 'spidev.eep')
