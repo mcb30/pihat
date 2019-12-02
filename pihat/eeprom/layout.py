@@ -199,8 +199,9 @@ class EepromHeader(EepromLittleEndianStructure):
     version = EepromEnumField(EepromVersion)
 
 
-class EepromAtomData(EepromLittleEndianStructure):
+class EepromAtomData(EepromStructure):
     """EEPROM atom data"""
+    # pylint: disable=abstract-method
 
     type: ClassVar[EepromAtomType]
 
@@ -212,7 +213,7 @@ class EepromAtomData(EepromLittleEndianStructure):
             cls.types[cls.type] = cls
 
 
-class EepromVendorInfo(EepromAtomData):
+class EepromVendorInfo(EepromAtomData, EepromLittleEndianStructure):
     """EEPROM vendor information data"""
 
     type: ClassVar[EepromAtomType] = EepromAtomType.INFO
@@ -303,7 +304,7 @@ class EepromGpioPins(EepromArray):
     _length_ = GPIO_COUNT
 
 
-class EepromGpioMap(EepromAtomData):
+class EepromGpioMap(EepromAtomData, EepromLittleEndianStructure):
     """EEPROM GPIO map"""
 
     type: ClassVar[EepromAtomType] = EepromAtomType.GPIO
