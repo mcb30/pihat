@@ -38,11 +38,15 @@ class OverlayTest(FileTestBase):
                                   self.files / '__nonexistent_file__'):
                     with patch.object(EepromDeviceOverlay, 'data',
                                       dtbo.getvalue()):
-                        with EepromDeviceOverlay():
+                        with EepromDeviceOverlay(autoremove=True):
                             dtbofile = ovdir / 'dtbo'
                             self.assertFilesEqual(dtbofile, dtbo)
                             dtbofile.unlink()
                         self.assertFalse(ovdir.exists())
+                        with EepromDeviceOverlay():
+                            dtbofile = ovdir / 'dtbo'
+                            self.assertFilesEqual(dtbofile, dtbo)
+                        self.assertTrue(ovdir.exists())
 
 
 class DeviceTest(FileTestBase):

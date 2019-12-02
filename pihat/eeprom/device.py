@@ -22,6 +22,7 @@ class EepromDeviceOverlay:
 
     bus: int = DEFAULT_BUS
     autocreate: bool = True
+    autoremove: bool = False
     timeout: float = 2.0
     interval: float = 0.1
 
@@ -82,7 +83,7 @@ class EepromDeviceOverlay:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         installed = self._ctx.pop()
-        if installed:
+        if installed and self.autoremove:
             self.remove()
 
 
