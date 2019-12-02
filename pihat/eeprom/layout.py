@@ -342,6 +342,11 @@ class EepromAtom(EepromLittleEndianStructure):
     def __len__(self):
         return sizeof(self) + len(self.data) + sizeof(EepromAtomChecksum)
 
+    @property
+    def unfixed_len(self):
+        """Recorded length (ignoring any potential data changes)"""
+        return sizeof(self) + self._dlen
+
     def fixup(self):
         # pylint: disable=attribute-defined-outside-init
         super().fixup()
@@ -466,7 +471,7 @@ class Eeprom(EepromStructure):
         while remaining:
             atom = EepromAtom().unpack(remaining)
             self.atoms.append(atom)
-            remaining = remaining[len(atom):]
+            remaining = remaining[atom.unfixed_len:]
         if self.header.numatoms != len(self.atoms):
             raise EepromLengthError("Atom count mismatch")
         return self
