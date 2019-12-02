@@ -6,6 +6,7 @@ from ctypes import (Array, LittleEndianStructure, c_uint8, c_uint16,
 from dataclasses import dataclass, field
 from typing import ClassVar, Dict, List, Optional, Type, Union
 from uuid import UUID
+from fdt import FDT, parse_dtb
 from .constants import (EepromSignature, EepromVersion, EepromAtomType,
                         EepromGpioDrive, EepromGpioSlew, EepromGpioHysteresis,
                         EepromGpioBackPower, EepromGpioFunction,
@@ -316,6 +317,24 @@ class EepromGpioMap(EepromAtomData, EepromLittleEndianStructure):
     ]
 
 
+@dataclass
+class EepromDeviceTreeBlob(EepromAtomData):
+    """EEPROM device tree blob"""
+
+    type: ClassVar[EepromAtomType] = EepromAtomType.DTBO
+
+    fdt: FDT = field(default_factory=FDT)
+
+    def pack(self, fixup=True):
+        super().pack(fixup=fixup)
+        return self.fdt.to_dtb()
+
+    def unpack(self, raw):
+        super().unpack(raw)
+        self.fdt = parse_dtb(raw)
+        return self
+
+
 class EepromAtomChecksum(EepromLittleEndianStructure):
     """EEPROM atom checksum"""
 
@@ -421,6 +440,13 @@ class EepromGpioAttribute(EepromAtomAttribute):
 
 
 @dataclass
+class EepromDtboAttribute(EepromAtomAttribute):
+    """An EEPROM attribute located inside the device tree blob atom"""
+
+    atom: str = 'dtbo'
+
+
+@dataclass
 class Eeprom(EepromStructure):
     """EEPROM content"""
     # pylint: disable=too-many-instance-attributes
@@ -442,6 +468,8 @@ class Eeprom(EepromStructure):
     bank = EepromGpioAttribute()
     power = EepromGpioAttribute()
     pins = EepromGpioAttribute()
+
+    fdt = EepromDtboAttribute()
 
     def __len__(self):
         return len(self.header) + sum(len(x) for x in self.atoms)

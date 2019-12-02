@@ -54,6 +54,14 @@ class FileTest(FileTestBase):
         self.assertEqual(eeprom.pins[2].pull, EepromGpioPull.DEFAULT)
         self.assertEqual(eeprom.pins[3].pull, EepromGpioPull.DOWN)
         self.assertEqual(eeprom.pins[8].function, EepromGpioFunction.ALT3)
+        self.assertEqual(
+            eeprom.fdt.get_property('status', 'fragment@0/__overlay__').value,
+            'okay'
+        )
+        self.assertEqual(
+            eeprom.fdt.get_property('i2c0', '__fixups__').value,
+            '/fragment@0:target:0',
+        )
 
     def test_load_init_name(self):
         """Test loading EEPROM from constructor filename"""

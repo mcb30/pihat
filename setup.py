@@ -25,6 +25,7 @@ setup(
         'pihat': ['eeprom/eeprom.dtbo'],
     },
     install_requires=[
+        'fdt',
         'setuptools',
     ],
 )
