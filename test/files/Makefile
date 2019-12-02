@@ -2,14 +2,18 @@
 # https://github.com/raspberrypi/hats.git
 
 EEPMAKE		:= eepmake
+DTC		:= dtc
 
-TXTFILES	:= $(wildcard *.txt)
-EEPFILES	:= $(patsubst %.txt,%.eep,$(TXTFILES))
-
-all : $(EEPFILES)
+all : sample.eep spidev.eep
 
 clean :
-	$(RM) $(EEPFILES)
+	$(RM) *.eep *.dtbo
 
-%.eep : %.txt
+%.dtbo : %.dts
+	$(DTC) -@ $< -o $@
+
+sample.eep : %.eep : %.txt %.dtbo
+	$(EEPMAKE) $< $@ $*.dtbo
+
+spidev.eep : %.eep : %.txt
 	$(EEPMAKE) $< $@
