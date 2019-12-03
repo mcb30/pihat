@@ -28,4 +28,9 @@ setup(
         'fdt',
         'setuptools',
     ],
+    entry_points={
+        'console_scripts': [
+            'pihat-eeprom=pihat.eeprom.cli:main',
+        ],
+    },
 )
