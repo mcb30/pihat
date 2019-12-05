@@ -21,9 +21,10 @@ setup(
         "Topic :: System :: Hardware :: Hardware Drivers",
     ],
     packages=find_packages(exclude=['test']),
-    package_data={
-        'pihat': ['eeprom/eeprom.dtbo'],
-    },
+    include_package_data=True,
+    setup_requires=[
+        'setuptools_scm',
+    ],
     install_requires=[
         'fdt',
         'setuptools',
