@@ -30,6 +30,7 @@
 
 			eeprom@50 {
 				compatible = "atmel,24c128";
+				status = "okay";
 				reg = <0x50>;
 			};
 		};
