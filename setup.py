@@ -23,6 +23,7 @@ setup(
     packages=find_packages(exclude=['test']),
     include_package_data=True,
     use_scm_version=True,
+    python_requires='>=3.7',
     setup_requires=[
         'setuptools_scm',
     ],
