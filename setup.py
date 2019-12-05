@@ -20,7 +20,7 @@ setup(
         "Topic :: System :: Boot",
         "Topic :: System :: Hardware :: Hardware Drivers",
     ],
-    packages=find_packages(),
+    packages=find_packages(exclude=['test']),
     package_data={
         'pihat': ['eeprom/eeprom.dtbo'],
     },
