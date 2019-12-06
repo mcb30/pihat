@@ -12,7 +12,7 @@ config.read(os.path.join(topdir, 'setup.cfg'))
 project = config['metadata']['name']
 author = config['metadata']['author']
 copyright = config['metadata']['copyright']
-release = get_distribution('pihat').version
+release = get_distribution(project).version
 version = release
 
 extensions = [
@@ -29,6 +29,6 @@ html_theme = 'alabaster'
 html_theme_options = {
     'description': config['metadata']['description'],
     'github_user': 'unipartdigital',
-    'github_repo': 'pihat',
+    'github_repo': project,
     'github_button': True,
 }
