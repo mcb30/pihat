@@ -73,7 +73,8 @@ class Command:
     def dump(self):
         """Dump existing EEPROM contents to stdout"""
         with self.eeprom() as eeprom:
-            print(eeprom.fdt.to_dts())
+            if eeprom.has_dtbo:
+                print(eeprom.fdt.to_dts())
 
     def extract(self):
         """Extract existing EEPROM content"""

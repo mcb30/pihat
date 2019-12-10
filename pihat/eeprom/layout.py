@@ -542,3 +542,8 @@ class Eeprom(EepromStructure):
                               data=EepromDeviceTreeBlob())
             self.atoms.insert(self.atoms.index(self.gpio) + 1, atom)
         return atom
+
+    @property
+    def has_dtbo(self):
+        """Check for presence of device tree overlay atom"""
+        return self.atom(EepromAtomType.DTBO) is not None
