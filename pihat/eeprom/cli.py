@@ -90,7 +90,7 @@ class Command:
 
     def replace(self):
         """Replace existing EEPROM content"""
-        with self.eeprom(autoload=False, autosave=True) as eeprom:
+        with self.eeprom(autoload=False, autosave=True, mode='w+b') as eeprom:
             if self.args.dts or self.args.dtb:
                 eeprom.fdt = self.read_fdt()
 
