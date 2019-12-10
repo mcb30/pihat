@@ -325,8 +325,13 @@ class EepromDeviceTreeBlob(EepromAtomData):
 
     fdt: FDT = field(default_factory=FDT)
 
+    def __len__(self):
+        return len(self.pack(fixup=True))
+
     def pack(self, fixup=True):
         super().pack(fixup=fixup)
+        if fixup and self.fdt.header.version is None:
+            self.fdt.header.version = self.fdt.header.MAX_VERSION
         return self.fdt.to_dtb()
 
     def unpack(self, raw):
@@ -533,6 +538,7 @@ class Eeprom(EepromStructure):
         """Device tree overlay atom"""
         atom = self.atom(EepromAtomType.DTBO)
         if atom is None:
-            atom = EepromAtom(type=EepromAtomType.DTBO)
+            atom = EepromAtom(type=EepromAtomType.DTBO,
+                              data=EepromDeviceTreeBlob())
             self.atoms.insert(self.atoms.index(self.gpio) + 1, atom)
         return atom
