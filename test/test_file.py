@@ -104,7 +104,7 @@ class FileTest(FileTestBase):
         """Test saving EEPROM to explicit filename"""
         eeprom = EepromFile(self.files / 'sample.eep').load()
         with NamedTemporaryFile() as temp:
-            eeprom.save(temp.name)
+            eeprom.save(temp.name, verify=True)
             self.assertFilesEqual(temp.file, self.files / 'sample.eep')
 
     def test_save_init_fh(self):

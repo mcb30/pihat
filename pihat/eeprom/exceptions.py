@@ -5,6 +5,7 @@ __all__ = [
     'EepromSignatureError',
     'EepromCrcError',
     'EepromLengthError',
+    'EepromVerificationError',
 ]
 
 
@@ -22,3 +23,7 @@ class EepromCrcError(EepromValueError):
 
 class EepromLengthError(EepromValueError):
     """EEPROM length error"""
+
+
+class EepromVerificationError(EepromValueError):
+    """EEPROM verification error"""

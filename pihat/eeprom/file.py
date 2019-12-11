@@ -6,6 +6,7 @@ from io import IOBase
 from os import PathLike
 from typing import IO, List, Union
 from uuid import uuid4
+from .exceptions import EepromVerificationError
 from .layout import Eeprom
 
 __all__ = [
@@ -83,10 +84,16 @@ class EepromFile(Eeprom, OpenableFile):
                 fh.seek(0)
             return self.unpack(fh.read())
 
-    def save(self, file=None, mode='wb'):
+    def save(self, file=None, mode='wb', verify=False):
         """Save EEPROM to file"""
+        data = self.pack()
         with self.open(file, mode) as fh:
             with suppress(IOError):
                 fh.seek(0)
                 fh.truncate()
-            fh.write(self.pack())
+            fh.write(data)
+        if verify:
+            with self.open(file, 'rb') as fh:
+                check = fh.read(len(data))
+            if check != data:
+                raise EepromVerificationError("Verification failed")
