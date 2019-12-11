@@ -29,6 +29,8 @@ setup(
     ],
     install_requires=[
         'fdt',
+        'pyyaml',
+        'schema',
         'setuptools',
     ],
     entry_points={

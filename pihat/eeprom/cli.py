@@ -3,6 +3,7 @@
 import argparse
 from dataclasses import dataclass, InitVar
 from fdt import parse_dts, parse_dtb
+from .desc import EepromDescription
 from .device import EepromDevice
 from .file import EepromFile
 
@@ -39,6 +40,9 @@ class Command:
         action.add_argument('-r', '--replace', dest='action',
                             action='store_const', const=self.replace,
                             help="Replace existing EEPROM content")
+        desc = parser.add_mutually_exclusive_group()
+        desc.add_argument('--json', help="JSON description file")
+        desc.add_argument('--yaml', help="YAML description file")
         dt = parser.add_mutually_exclusive_group()
         dt.add_argument('--dts', help="Devicetree source file")
         dt.add_argument('--dtb', help="Devicetree binary file")
@@ -51,6 +55,24 @@ class Command:
             EepromDevice(bus=self.args.bus, **kwargs) if self.args.bus else
             EepromDevice(**kwargs)
         )
+
+    def read_desc(self):
+        """Read description"""
+        if self.args.json:
+            with open(self.args.json, 'r') as f:
+                return EepromDescription(json=f.read())
+        else:
+            with open(self.args.yaml, 'r') as f:
+                return EepromDescription(yaml=f.read())
+
+    def write_desc(self, desc):
+        """Write description"""
+        if self.args.json:
+            with open(self.args.json, 'w') as f:
+                f.write(desc.json)
+        else:
+            with open(self.args.yaml, 'w') as f:
+                f.write(desc.yaml)
 
     def read_fdt(self):
         """Read devicetree"""
@@ -73,24 +95,31 @@ class Command:
     def dump(self):
         """Dump existing EEPROM contents to stdout"""
         with self.eeprom() as eeprom:
+            print(EepromDescription.from_eeprom(eeprom).yaml)
             if eeprom.has_dtbo:
                 print(eeprom.fdt.to_dts())
 
     def extract(self):
         """Extract existing EEPROM content"""
         with self.eeprom() as eeprom:
+            if self.args.json or self.args.yaml:
+                self.write_desc(EepromDescription.from_eeprom(eeprom))
             if self.args.dts or self.args.dtb:
                 self.write_fdt(eeprom.fdt)
 
     def merge(self):
         """Merge with existing EEPROM content"""
         with self.eeprom(autosave=True) as eeprom:
+            if self.args.json or self.args.yaml:
+                self.read_desc().apply(eeprom)
             if self.args.dts or self.args.dtb:
                 eeprom.fdt.merge(self.read_fdt())
 
     def replace(self):
         """Replace existing EEPROM content"""
         with self.eeprom(autoload=False, autosave=True, mode='w+b') as eeprom:
+            if self.args.json or self.args.yaml:
+                self.read_desc().apply(eeprom)
             if self.args.dts or self.args.dtb:
                 eeprom.fdt = self.read_fdt()
 

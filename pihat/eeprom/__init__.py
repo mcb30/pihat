@@ -2,6 +2,7 @@
 
 from .constants import *
 from .crc import *
+from .desc import *
 from .device import *
 from .exceptions import *
 from .file import *
