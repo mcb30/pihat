@@ -94,6 +94,7 @@ class EepromDevice(EepromFile):
     bus: InitVar[Optional[int]] = field(default=None, compare=False)
     overlay: EepromDeviceOverlay = field(default_factory=EepromDeviceOverlay,
                                          compare=False)
+    autouuid: bool = field(default=True, compare=False)
 
     def __post_init__(self, bus):
         # pylint: disable=assigning-non-slot

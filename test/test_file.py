@@ -178,3 +178,17 @@ class FileTest(FileTestBase):
                 self.assertEqual(eeprom4.uuid,
                                  UUID('5faf992a-2098-496c-a119-46dcb2dc0ddd'))
                 self.assertEqual(eeprom4.pstr, b'Else')
+
+    def test_autouuid(self):
+        """Test automatic generation of UUID"""
+        with NamedTemporaryFile() as temp:
+            eeprom1 = EepromFile(temp.name, autouuid=True)
+            eeprom1.vstr = b'Hello'
+            eeprom1.vstr = b'World'
+            self.assertEqual(eeprom1.uuid.int, 0)
+            eeprom1.save(temp.name)
+            self.assertEqual(eeprom1.uuid.int, 0)
+            eeprom2 = EepromFile(temp.name).load()
+            self.assertNotEqual(eeprom2.uuid.int, 0)
+            eeprom1.uuid = eeprom2.uuid
+            self.assertEqual(eeprom1, eeprom2)

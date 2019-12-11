@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from io import IOBase
 from os import PathLike
 from typing import IO, List, Union
+from uuid import uuid4
 from .layout import Eeprom
 
 __all__ = [
@@ -53,6 +54,7 @@ class EepromFile(Eeprom, OpenableFile):
 
     autoload: bool = field(default=True, compare=False)
     autosave: bool = field(default=False, compare=False)
+    autouuid: bool = field(default=False, compare=False)
 
     def __enter__(self):
         super().__enter__()
@@ -64,6 +66,15 @@ class EepromFile(Eeprom, OpenableFile):
         if self.autosave and exc_type is None:
             self.save()
         return super().__exit__(exc_type, exc_val, exc_tb)
+
+    def pack(self, fixup=True):
+        uuid = self.uuid
+        try:
+            if self.autouuid and not self.uuid.int:
+                self.uuid = uuid4()
+            return super().pack(fixup=fixup)
+        finally:
+            self.uuid = uuid
 
     def load(self, file=None, mode='rb'):
         """Load EEPROM from file"""
