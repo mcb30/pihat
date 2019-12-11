@@ -16,10 +16,11 @@ __all__ = [
 class OpenableFile:
     """Openable file base class"""
 
-    file: Union[None, PathLike, IO] = None
-    mode: str = 'r+b'
+    file: Union[None, PathLike, IO] = field(default=None, compare=False)
+    mode: str = field(default='r+b', compare=False)
 
-    _ctx: List = field(init=False, repr=False, default_factory=list)
+    _ctx: List = field(init=False, repr=False, compare=False,
+                       default_factory=list)
 
     @contextmanager
     def open(self, file=None, mode=None):
@@ -50,8 +51,8 @@ class OpenableFile:
 class EepromFile(Eeprom, OpenableFile):
     """EEPROM stored in a file"""
 
-    autoload: bool = True
-    autosave: bool = False
+    autoload: bool = field(default=True, compare=False)
+    autosave: bool = field(default=False, compare=False)
 
     def __enter__(self):
         super().__enter__()

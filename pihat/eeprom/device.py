@@ -91,8 +91,9 @@ class EepromDeviceOverlay:
 class EepromDevice(EepromFile):
     """EEPROM stored in an i2c EEPROM device"""
 
-    bus: InitVar[Optional[int]] = None
-    overlay: EepromDeviceOverlay = field(default_factory=EepromDeviceOverlay)
+    bus: InitVar[Optional[int]] = field(default=None, compare=False)
+    overlay: EepromDeviceOverlay = field(default_factory=EepromDeviceOverlay,
+                                         compare=False)
 
     def __post_init__(self, bus):
         # pylint: disable=assigning-non-slot
